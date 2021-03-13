@@ -40,7 +40,7 @@ pip download -d ${PIP_REPO} pexpect
 ### 
 #### Generate httpd.conf file #####
 ### 
-cat <<EOT > /etc/httpd/httpd.conf
+cat <<EOT > /etc/httpd/conf/httpd.conf
 ServerRoot "/etc/httpd"
 Listen 80
 Include conf.modules.d/*.conf
@@ -59,5 +59,9 @@ DocumentRoot "${BASE_PATH}"
 EOT
 
 systemctl restart httpd
+systemctl enable httpd
+systemctl stop firewalld
+systemctl disable firewalld
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/sysconfig/selinux
 
 
