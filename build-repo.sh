@@ -62,6 +62,14 @@ systemctl restart httpd
 systemctl enable httpd
 systemctl stop firewalld
 systemctl disable firewalld
-sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/sysconfig/selinux
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+
+IFS='/' read -r -a array <<< "${BASE_PATH}"
+echo "chmod 755 /${array[1]}"
+chmod 755 /${array[1]}
+
+reboot
+
+
 
 
