@@ -1,0 +1,9 @@
+[ambari-2.7.4.0]
+name=ambari Version - ambari-2.7.4.0
+baseurl=http://deployhost/ambari/centos7/2.7.4.0-118
+gpgcheck=1
+gpgkey=http://deployhost/ambari/centos7/2.7.4.0-118/RPM-GPG-KEY/RPM-GPG-KEY-Jenkins
+enabled=1
+priority=1
+
+

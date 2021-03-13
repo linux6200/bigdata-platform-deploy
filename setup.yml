@@ -1,0 +1,161 @@
+---
+  - hosts: localhost
+    user: root
+    tasks:
+     - name: update httpd.conf to /etc/httpd/conf
+       copy:
+         src: httpd.conf
+         dest: /etc/httpd/conf
+    
+     - name: Restart service httpd
+       service:
+         name: httpd
+         state: restarted
+
+
+
+  - hosts: deployserver
+    user: root
+    tasks:
+     - name: ssh-copy
+       authorized_key:
+         user: root
+         state: present
+         key: "{{ lookup('file', '.ssh/id_rsa.pub') }}"
+
+     - include_vars: server_vars.yml
+
+     - name: Update the /etc/hosts file with node name
+       tags: etchostsupdate
+       become: yes
+       become_user: root
+       lineinfile:
+         path: "/etc/hosts"
+         regexp: ".*\t{{ hostvars[item]['inventory_hostname']}}\t{{ hostvars[item]['inventory_hostname']}}"
+         line: "{{ hostvars[item][item] }}\t{{ hostvars[item]['inventory_hostname']}}\t{{ hostvars[item]['inventory_hostname']}}"
+         state: present
+         backup: yes
+       with_items: "{{groups['deployserver']}}"
+
+
+
+
+  - hosts: clusterhosts
+    user: root
+    tasks:
+     - name: ssh-copy
+       authorized_key:
+         user: root
+         state: present
+         key: "{{ lookup('file', '.ssh/id_rsa.pub') }}"
+
+     - include_vars: server_vars.yml
+
+
+     - name: Set a hostname
+       hostname:
+         name: "{{item}}"
+       with_inventory_hostnames:
+         - clusterhosts
+
+
+     - name: find the all of CentOS original yum repo files
+       find:
+         paths: /etc/yum.repos.d
+         patterns: '*.repo'
+       register: yumrepo_files_to_delete
+  
+     - name: remove original yum repos files
+       file:
+         path: "{{ item.path }}"
+         state: absent
+       with_items: "{{ yumrepo_files_to_delete.files }}"
+
+     - name: Add local yum repository
+       yum_repository:
+         name: local
+         description: the yum reposition in deployhost
+         baseurl: http://deployhost/repo
+         enabled: yes
+         gpgcheck: no
+
+
+
+     - name: Copy ambari repo file to /etc/yum.repos.d
+       copy:
+         src: ambari.repo
+         dest: /etc/yum.repos.d
+
+
+     - name: Disable SELinux
+       selinux:
+         state: disabled
+
+     - name: Install yum packages using a list (unzip,wget,ntp)
+       yum:
+         name: 
+           - unzip
+           - wget
+           - ntp
+           - python-devel 
+           - python-pip 
+           - python-setuptools
+         state: latest
+
+     - name: Make sure ntpd service is running
+       systemd:
+         state: started
+         name: ntpd
+
+     - name: Stop and disable firewalld service
+       service:
+         name: firewalld
+         enabled: no
+         state:   stopped
+
+
+     - name: Unconditionally reboot the machine with all defaults
+       reboot:
+
+
+     - name: Install ambari-server package
+       yum:
+         name: 
+           - ambari-server
+         state: latest
+
+     - name: Update ambari config file
+       lineinfile:
+         dest: /etc/ambari-server/conf/ambari.properties
+         regexp: "{{ item.regexp }}"
+         line: "{{ item.line }}"
+       with_items:
+         - { regexp: '^jdk1.8.url=', line: 'jdk1.8.url=http://deployhost/jdk-8u112-linux-x64.tar.gz' }
+         - { regexp: '^jdk1.8.jcpol-url=', line: 'jdk1.8.jcpol-url=http://deployhost/jce_policy-8.zip' }
+
+     - name: Install pexpect for ambari-server setup
+       pip:
+         name: pexpect
+         extra_args: "--trusted-host deployhost --no-index --find-links=http://deployhost/pip"
+
+     - name: Begin "ambari-server setup"
+       expect: 
+         command: ambari-server setup
+         responses:
+           'Customize user account for ambari-server daemon \[y/n\] \(n\)?': 'n'
+           'Enter choice \(1\):': '1'
+           'Do you want to change Oracle JDK \[y/n\] \(n\)?': 'n'
+           'Do you accept the Oracle Binary Code License Agreement \[y/n\] \(y\)?': 'y'
+           'Enable Ambari Server to download and install GPL Licensed LZO packages \[y/n\] \(n\)?': 'n'
+           'Enter advanced database configuration \[y/n\] \(n\)?': 'n'
+           "Ambari Server 'setup' completed successfully.": ''
+       register: result
+
+     - debug: msg="{{ result.stdout }}"
+
+     - name: Make sure ambari-server service is running
+       systemd:
+         state: started
+         name: ambari-server
+
+
