@@ -31,13 +31,16 @@ yum install yum-utils createrepo -y
 
 createrepo ${YUM_REPO}
 
+yum install -y python-devel python-pip python-setuptools
+yum install -y httpd
+yum install -y ansible
 pip download -d ${PIP_REPO} pexpect
 
 
 ### 
 #### Generate httpd.conf file #####
 ### 
-cat <<EOT > httpd.conf
+cat <<EOT > /etc/httpd/httpd.conf
 ServerRoot "/etc/httpd"
 Listen 80
 Include conf.modules.d/*.conf
@@ -54,4 +57,7 @@ DocumentRoot "${BASE_PATH}"
 </Directory>
 
 EOT
+
+systemctl restart httpd
+
 

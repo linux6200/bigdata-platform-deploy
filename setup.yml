@@ -1,19 +1,4 @@
 ---
-  - hosts: localhost
-    user: root
-    tasks:
-     - name: update httpd.conf to /etc/httpd/conf
-       copy:
-         src: httpd.conf
-         dest: /etc/httpd/conf
-    
-     - name: Restart service httpd
-       service:
-         name: httpd
-         state: restarted
-
-
-
   - hosts: deployserver
     user: root
     tasks:
@@ -78,7 +63,6 @@
          baseurl: http://deployhost/repo
          enabled: yes
          gpgcheck: no
-
 
 
      - name: Copy ambari repo file to /etc/yum.repos.d
