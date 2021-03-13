@@ -1,12 +1,17 @@
 master1 ansible_user=root ansible_ssh_pass="P@ssw0rd"
-worker1 ansible_user=root ansible_ssh_pass="P@ssw0rd"
-worker2 ansible_user=root ansible_ssh_pass="P@ssw0rd"
+master2 ansible_user=root ansible_ssh_pass="P@ssw0rd"
+master3 ansible_user=root ansible_ssh_pass="P@ssw0rd"
 
 [deploy]
 deployhost ansible_user=root ansible_ssh_pass="P@ssw0rd"
 
+[masterhost]
+master1
+
 [clusterhosts]
 master1
+master2
+master3
 
 [deployserver:children]
 deploy

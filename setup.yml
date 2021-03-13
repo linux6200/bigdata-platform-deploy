@@ -17,7 +17,7 @@
        lineinfile:
          path: "/etc/hosts"
          regexp: ".*\t{{ hostvars[item]['inventory_hostname']}}\t{{ hostvars[item]['inventory_hostname']}}"
-         line: "{{ hostvars[item][item] }}\t{{ hostvars[item]['inventory_hostname']}}\t{{ hostvars[item]['inventory_hostname']}}"
+         line: "{{ hostvars[item][item] }}\t{{ hostvars[item]['inventory_hostname']}}\t{{ hostvars[item]['inventory_hostname']}}.bigdata.com"
          state: present
          backup: yes
        with_items: "{{groups['deployserver']}}"
@@ -39,22 +39,21 @@
 
      - name: Set a hostname
        hostname:
-         name: "{{item}}"
-       with_inventory_hostnames:
-         - clusterhosts
+         name: "{{inventory_hostname}}"
 
+     - name: Update the /etc/resolv.conf
+       lineinfile:
+         path: "/etc/resolv.conf"
+         regexp: "^nameserver"
+         line: "nameserver 8.8.8.8"
 
-     - name: find the all of CentOS original yum repo files
-       find:
-         paths: /etc/yum.repos.d
-         patterns: '*.repo'
-       register: yumrepo_files_to_delete
-  
-     - name: remove original yum repos files
-       file:
-         path: "{{ item.path }}"
-         state: absent
-       with_items: "{{ yumrepo_files_to_delete.files }}"
+     - name: Delete original repo files
+       shell: rm -rf /etc/yum.repos.d/CentOS*.repo
+
+     - name: Download CentOS repository mirror in china
+       get_url:
+         url: http://mirrors.aliyun.com/repo/Centos-7.repo
+         dest: /etc/yum.repos.d/CentOS-base.repo
 
      - name: Add local yum repository
        yum_repository:
@@ -97,11 +96,32 @@
          enabled: no
          state:   stopped
 
-
      - name: Unconditionally reboot the machine with all defaults
        reboot:
 
+     - name: Install ambari-agent package
+       yum:
+         name: 
+           - ambari-agent
+         state: latest
 
+     - name: Update the ambari-agent config file
+       become: yes
+       become_user: root
+       lineinfile:
+         path: "/etc/ambari-agent/conf/ambari-agent.ini"
+         regexp: "^hostname="
+         line: "hostname=master1"
+
+
+     - name: Make sure ambari-server service is running
+       systemd:
+         state: restarted
+         name: ambari-agent
+
+  - hosts: masterhost 
+    user: root
+    tasks:
      - name: Install ambari-server package
        yum:
          name: 
@@ -134,8 +154,6 @@
            'Enter advanced database configuration \[y/n\] \(n\)?': 'n'
            "Ambari Server 'setup' completed successfully.": ''
        register: result
-
-     - debug: msg="{{ result.stdout }}"
 
      - name: Make sure ambari-server service is running
        systemd:
