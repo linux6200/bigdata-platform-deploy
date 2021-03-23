@@ -161,3 +161,18 @@
          name: ambari-server
 
 
+     - name: Install the mysql reposistory rpm from a remote repo for mysql-connector-java
+       yum:
+         name: https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+         state: present
+
+     - name: Install mysql-connector-java
+       yum:
+         name: mysql-connector-java
+         state: present
+
+     - name: Install mysql jdbc package in ambari-server
+       command: ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
+
+
+
