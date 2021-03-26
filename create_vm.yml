@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    vcenter_server: "172.10.1.100"
+    vcenter_user: "administrator@vsphere.local"
+    vcenter_pass: "P@ssw0rd"
+    datacenter_name: "Dev-Datacenter"
+    cluster_name: "Dev-Cluster"
+  tasks:
+  - name: Clone the template
+    vmware_guest:
+      hostname: "{{ vcenter_server }}"
+      username: "{{ vcenter_user }}"
+      password: "{{ vcenter_pass }}"
+      validate_certs: False
+      name: mytest001
+      template: CentOS7.7-minimal-template
+      datacenter: "{{ datacenter_name }}"
+      folder: /{{ datacenter_name }}/vm
+      cluster: "{{ cluster_name }}"
+      datastore: "ScaleIO_VM_Datastore_1"
+      networks:
+      - name: VM Network
+        ip: 172.10.2.144
+        netmask: 255.255.255.0
+        gateway: 172.10.2.253
+        type: static
+        dns_servers: 10.1.1.2
+      customization:
+        hostname: "myhost"
+        dns_servers:
+        - 10.1.1.2
+        - 1.1.1.1
+      state: poweredon
+      wait_for_ip_address: yes
+    delegate_to: localhost
+

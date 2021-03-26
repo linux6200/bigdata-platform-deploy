@@ -35,6 +35,7 @@ yum install -y python-devel python-pip python-setuptools
 yum install -y httpd
 yum install -y ansible
 pip download -d ${PIP_REPO} pexpect
+pip download -d ${PIP_REPO} pyvmomi
 
 
 ### 

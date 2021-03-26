@@ -87,8 +87,9 @@
 
      - name: Make sure ntpd service is running
        systemd:
-         state: started
          name: ntpd
+         state: started
+         enabled: yes
 
      - name: Stop and disable firewalld service
        service:
@@ -111,13 +112,14 @@
        lineinfile:
          path: "/etc/ambari-agent/conf/ambari-agent.ini"
          regexp: "^hostname="
-         line: "hostname=master1"
+         line: "hostname=master01"
 
 
      - name: Make sure ambari-server service is running
        systemd:
-         state: restarted
          name: ambari-agent
+         state: restarted
+         enabled: yes
 
   - hosts: masterhost 
     user: root
@@ -157,8 +159,9 @@
 
      - name: Make sure ambari-server service is running
        systemd:
-         state: started
          name: ambari-server
+         state: started
+         enabled: yes
 
 
      - name: Install the mysql reposistory rpm from a remote repo for mysql-connector-java
@@ -174,5 +177,7 @@
      - name: Install mysql jdbc package in ambari-server
        command: ambari-server setup --jdbc-db=mysql --jdbc-driver=/usr/share/java/mysql-connector-java.jar
 
-
-
+     - name: Copy MySQL-connection-java.jar to ambari-server resource
+       copy:
+         src: package/mysql-connector-java-8.0.23.jar
+         dest: /var/lib/ambari-server/resources/mysql-connector-java.jar

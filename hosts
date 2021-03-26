@@ -1,19 +1,22 @@
-master1 ansible_user=root ansible_ssh_pass="P@ssw0rd"
-master2 ansible_user=root ansible_ssh_pass="P@ssw0rd"
-master3 ansible_user=root ansible_ssh_pass="P@ssw0rd"
+[all:vars]
+ansible_ssh_port=22
+ansible_user=root 
+ansible_ssh_pass="P@ssw0rd"
 
-[deploy]
-deployhost ansible_user=root ansible_ssh_pass="P@ssw0rd"
 
 [masterhost]
-master1
-
-[clusterhosts]
-master1
-master2
-master3
+master01
 
 [deployserver:children]
 deploy
 clusterhosts
+
+[deploy]
+deployhost ansible_user=root ansible_ssh_pass="P@ssw0rd" ansible_ssh_host=192.168.2.139 ansible_ssh_port=22
+
+[clusterhosts]
+master01 ansible_user=root ansible_ssh_pass="P@ssw0rd" ansible_ssh_host=192.168.2.130 ansible_ssh_port=22
+master02 ansible_user=root ansible_ssh_pass="P@ssw0rd" ansible_ssh_host=192.168.2.131 ansible_ssh_port=22
+master03 ansible_user=root ansible_ssh_pass="P@ssw0rd" ansible_ssh_host=192.168.2.132 ansible_ssh_port=22
+
 
